@@ -40,7 +40,7 @@ export class AuthService {
       const user = this.userRepository.create({
         ...userData,
         password: bcrypt.hashSync( password, 10 ),
-        rol,
+        //rol,
       });
 
       
@@ -51,7 +51,7 @@ export class AuthService {
 
       return {
         ...user,
-        token: this.getJwtToken({ id: user.id, fullName: user.fullName })
+        token: this.getJwtToken({ id: user.id, nombre: user.nombre })
       };
       // TODO: Retornar el JWT de acceso
 
@@ -69,7 +69,7 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { email: true, password: true, id: true, fullName: true } //! OJO!
+      select: { email: true, password: true, id: true, nombre: true } //! OJO!
     });
 
     if ( !user ) 
@@ -80,7 +80,7 @@ export class AuthService {
     console.log(user)
     return {
       ...user,
-      token: this.getJwtToken({ id: user.id, fullName: user.fullName })
+      token: this.getJwtToken({ id: user.id, nombre: user.nombre })
     };
   }
 
@@ -88,7 +88,7 @@ export class AuthService {
 
     return {
       ...user,
-      token: this.getJwtToken({ id: user.id, fullName: user.fullName })
+      token: this.getJwtToken({ id: user.id, nombre: user.nombre })
     };
 
   }

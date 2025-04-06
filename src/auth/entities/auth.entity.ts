@@ -1,5 +1,6 @@
 import { Rol } from '../../rol/entities/rol.entity';
-import { BeforeInsert, BeforeUpdate, Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Proyecto } from '../../proyecto/entities/proyecto.entity';
 
 
 @Entity('users')
@@ -19,24 +20,31 @@ export class User {
     password: string;
 
     @Column('text')
-    fullName: string;
+    nombre: string;
 
     @Column('bool', {
         default: true
     })
     isActive: boolean;
 
+    @OneToMany(() => Proyecto, (proye) => proye.usuario)
+    proyecto: Proyecto;
+
+    @ManyToMany(() => Proyecto, (proye) => proye.user, {cascade:true})
+    @JoinTable() 
+    proyec: Proyecto[]; 
+
     // @Column('text', {
     //     array: true,
     //     default: ['user']
     // })
     // roles: string[];
-    @ManyToOne(
-        () => Rol,
-        ( rol ) => rol.user,
-        { eager: true }
-    )
-    rol: Rol
+    // @ManyToOne(
+    //     () => Rol,
+    //     ( rol ) => rol.user,
+    //     { eager: true }
+    // )
+    // rol: Rol
 
     @BeforeInsert()
     checkFieldsBeforeInsert() {

@@ -10,8 +10,8 @@ export class Rol {
   @Column({ unique: true })
   nombre: string;
 
-  @OneToMany(() => User, (user) => user.rol)
-  user: User;
+  // @OneToMany(() => User, (user) => user.rol)
+  // user: User;
 
   @ManyToMany(() => Funcionalidad, (funcionalidad) => funcionalidad.roles, { cascade: true })
   @JoinTable() // Necesario para definir la tabla intermedia
