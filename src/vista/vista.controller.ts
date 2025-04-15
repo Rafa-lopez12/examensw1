@@ -12,9 +12,9 @@ export class VistaController {
     return this.vistaService.create(createVistaDto);
   }
 
-  @Get()
-  findAll() {
-    return this.vistaService.findAll();
+  @Get('findall/:id')
+  findAll(@Param('id') id:string) {
+    return this.vistaService.findAll(id);
   }
 
   @Get(':id')

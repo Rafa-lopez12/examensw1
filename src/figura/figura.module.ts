@@ -8,6 +8,7 @@ import { Vista } from '../vista/entities/vista.entity';
 @Module({
   controllers: [FiguraController],
   providers: [FiguraService],
-  imports: [TypeOrmModule.forFeature([Figura, Vista])]
+  imports: [TypeOrmModule.forFeature([Figura, Vista])],
+  exports:[FiguraService]
 })
 export class FiguraModule {}

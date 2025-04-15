@@ -12,9 +12,9 @@ export class ProyectoController {
     return this.proyectoService.create(createProyectoDto);
   }
 
-  @Get()
-  findAll() {
-    return this.proyectoService.findAll();
+  @Get('findall/:id')
+  findAll(@Param('id') id: string) {
+    return this.proyectoService.findAll(id);
   }
 
   @Get(':id')

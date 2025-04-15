@@ -20,7 +20,7 @@ export class CreateUserDto {
     @MinLength(1)
     nombre: string;
 
-    @IsUUID()
-    rolId: string;
+    // @IsUUID()
+    // rolId: string;
 
 }

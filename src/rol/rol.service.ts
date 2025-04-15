@@ -15,7 +15,7 @@ export class RolService {
     
     const rol=this.rolrepository.create(createRolDto)
     await this.rolrepository.save(rol)
-    return 'This action adds a new rol';
+    return rol;
   }
 
   findAll() {

@@ -12,19 +12,19 @@ export class FiguraController {
     return this.figuraService.create(createFiguraDto);
   }
 
-  @Get()
-  findAll() {
-    return this.figuraService.findAll();
+  @Get('findall/:id')
+  findAll(@Param('id') id:string) {
+    return this.figuraService.findAll(id);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.figuraService.findOne(+id);
+    return this.figuraService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateFiguraDto: UpdateFiguraDto) {
-    return this.figuraService.update(+id, updateFiguraDto);
+    return this.figuraService.update(id, updateFiguraDto);
   }
 
   @Delete(':id')

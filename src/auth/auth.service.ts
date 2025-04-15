@@ -30,12 +30,12 @@ export class AuthService {
     
     try {
 
-      const { password, rolId, ...userData } = createUserDto;
+      const { password,  ...userData } = createUserDto;
       
-      const rol = await this.rolRepository.findOne({ where: { id: rolId } });
-      if (!rol) {
-        throw new Error('El rol especificado no existe');
-      }
+      // const rol = await this.rolRepository.findOne({ where: { id: rolId } });
+      // if (!rol) {
+      //   throw new Error('El rol especificado no existe');
+      // }
 
       const user = this.userRepository.create({
         ...userData,
@@ -47,7 +47,7 @@ export class AuthService {
 
       await this.userRepository.save( user )
       delete user[password]
-      delete user[rolId]
+      // delete user[rolId]
 
       return {
         ...user,

@@ -8,6 +8,7 @@ import { Proyecto } from '../proyecto/entities/proyecto.entity';
 @Module({
   controllers: [VistaController],
   providers: [VistaService],
-  imports: [TypeOrmModule.forFeature([Vista, Proyecto])]
+  imports: [TypeOrmModule.forFeature([Vista, Proyecto])],
+  exports: [VistaService]
 })
 export class VistaModule {}
