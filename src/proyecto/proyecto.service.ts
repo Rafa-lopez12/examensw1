@@ -41,11 +41,10 @@ export class ProyectoService {
     if (!usuario) {
       throw new Error('El usuario especificado no existe');
     }
-    console.log(usuario)
 
     const proyectos= await this.proyectoRepository.find({ where:{ usuario: {id}}})
     const proyectosInvitado = usuario.proyec || [];
-    console.log(proyectosInvitado)
+    
   
     // Combinar ambos arrays y eliminar duplicados (si los hubiera)
     const todosProyectos = [

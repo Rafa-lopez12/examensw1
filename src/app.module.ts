@@ -10,6 +10,8 @@ import { FuncionalidadModule } from './funcionalidad/funcionalidad.module';
 import { ProyectoModule } from './proyecto/proyecto.module';
 import { VistaModule } from './vista/vista.module';
 import { FiguraModule } from './figura/figura.module';
+import { OpenAIModule } from './openai/openai.module';
+
 
 
 
@@ -38,7 +40,8 @@ import { FiguraModule } from './figura/figura.module';
     FuncionalidadModule,
     ProyectoModule,
     VistaModule,
-    FiguraModule
+    FiguraModule,
+    OpenAIModule
     
   ],
   providers: [],
