@@ -21,6 +21,7 @@ import {
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
 
 @Controller('code-generator')
 export class OpenAIController {
@@ -82,9 +83,24 @@ export class OpenAIController {
 
       this.logger.log(`Usuario ${user.id} solicitó generación de código para la página "${pageName}"`);
 
+      // Leer la imagen como un Buffer
+      let imageBuffer;
+      if (image.buffer) {
+        // Si ya está como buffer, usarlo directamente
+        imageBuffer = image.buffer;
+      } else if (image.path) {
+        // Si tenemos la ruta del archivo guardado, leerlo
+        imageBuffer = fs.readFileSync(image.path);
+      } else {
+        throw new HttpException(
+          'Formato de imagen no válido',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+
       // Generar el código Angular a partir de la captura de pantalla
       const generatedCode = await this.openaiService.generateAngularCodeFromScreenshot({
-        image: image.buffer,
+        image: imageBuffer,
         pageName,
         description
       });
