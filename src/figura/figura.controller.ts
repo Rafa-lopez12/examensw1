@@ -29,6 +29,6 @@ export class FiguraController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.figuraService.remove(+id);
+    return this.figuraService.remove(id);
   }
 }

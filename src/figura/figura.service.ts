@@ -71,7 +71,23 @@ export class FiguraService {
     return this.figuraRepository.save(figura);
   }
 
-  remove(id: number) {
-    return `This action update a #${id} figura`;
+  async remove(id: string) {
+    // Verificar si la figura existe
+    const figura = await this.figuraRepository.findOne({where: {id}});
+    if (!figura) {
+      throw new NotFoundException(`Figura con ID ${id} no encontrada`);
+    }
+    
+    // Eliminar la figura
+    await this.figuraRepository.remove(figura);
+    
+    // Devolver el ID de la figura eliminada para confirmar
+    return { 
+      success: true,
+      id,
+      message: `La figura ${id} ha sido eliminada con éxito`
+    };
   }
+
+  
 }

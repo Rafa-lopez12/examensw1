@@ -127,27 +127,26 @@ async handleUpdateFigure(client: Socket, payload: { id: string, data: UpdateFigu
   }
 }
 
-  // Eliminar una figura
-  // @SubscribeMessage('deleteFigure')
-  // async handleDeleteFigure(client: Socket, payload: { id: string, pageId: string }) {
-  //   const { id, pageId } = payload;
-  //   console.log(`Eliminando figura ${id}`);
+@SubscribeMessage('deleteFigure')
+async handleDeleteFigure(client: Socket, payload: { id: string, pageId: string }) {
+  const { id, pageId } = payload;
+  console.log(`Eliminando figura ${id}`);
+  
+  try {
+    // Eliminar de la base de datos
+    await this.figurasService.remove(id);
     
-  //   try {
-  //     // Eliminar de la base de datos
-  //     await this.figurasService.remove(id);
-      
-  //     // Notificar a todos los clientes en la misma página
-  //     this.wss.to(`page_${pageId}`).emit('figureDeleted', { id });
-      
-  //     return { success: true };
-  //   } catch (error) {
-  //     console.error('Error al eliminar figura:', error);
-  //     return { 
-  //       success: false, 
-  //       error: error.message 
-  //     };
-  //   }
-  // }
+    // Notificar a todos los clientes en la misma página
+    this.wss.to(`page_${pageId}`).emit('figureDeleted', { id });
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error al eliminar figura:', error);
+    return { 
+      success: false, 
+      error: error.message 
+    };
+  }
+}
 }
 
