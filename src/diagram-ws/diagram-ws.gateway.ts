@@ -12,7 +12,16 @@ import { FiguraService } from '../figura/figura.service';
 import { CreateFiguraDto } from '../figura/dto/create-figura.dto';
 import { UpdateFiguraDto } from '../figura/dto/update-figura.dto';
 
-@WebSocketGateway({cors: true})
+@WebSocketGateway({
+  cors: {
+    origin: '*', // Permitir cualquier origen (puedes cambiarlo a una lista de dominios específicos)
+    methods: ['GET', 'POST'],
+    credentials: true,
+    allowedHeaders: ['my-custom-header'],
+  },
+  transports: ['websocket', 'polling'], // Asegúrate de incluir 'polling' para mayor compatibilidad
+  path: '/socket.io/',
+})
 export class DiagramWsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   
   @WebSocketServer() 
