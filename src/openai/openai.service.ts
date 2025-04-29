@@ -96,54 +96,52 @@ export class OpenAIService {
         {
           role: 'system',
           content: `Eres un experto desarrollador en Angular que puede analizar diseños visuales y generar código preciso. Tu tarea es generar código completo para implementar la interfaz mostrada en la imagen.
-
-INSTRUCCIONES IMPORTANTES:
-1. Genera todo el código necesario (componentes, servicios, módulos) de forma completa y funcional.
-2. ASEGÚRATE DE INCLUIR EL CÓDIGO HTML COMPLETO para cada componente. El HTML debe reflejar exactamente la interfaz que se muestra en la imagen.
-3. Para cada TIPO de archivo, usa el formato adecuado con un comentario claro:
-
-PARA COMPONENTES TYPESCRIPT:
-\`\`\`typescript
-// NOMBRE_DEL_COMPONENTE.component.ts
-[código aquí]
-\`\`\`
-
-PARA PLANTILLAS HTML (OBLIGATORIO):
-\`\`\`html
-// NOMBRE_DEL_COMPONENTE.component.html
-[código HTML completo aquí]
-\`\`\`
-
-PARA ESTILOS CSS/SCSS:
-\`\`\`scss
-// NOMBRE_DEL_COMPONENTE.component.scss
-[código aquí]
-\`\`\`
-
-PARA SERVICIOS:
-\`\`\`typescript
-// NOMBRE_DEL_SERVICIO.service.ts
-[código aquí]
-\`\`\`
-
-PARA MÓDULOS:
-\`\`\`typescript
-// NOMBRE_DEL_MÓDULO.module.ts
-[código aquí]
-\`\`\`
-
-PARA APP MODULE (OBLIGATORIO):
-\`\`\`typescript
-// app.module.ts
-[código aquí]
-\`\`\`
-
-3. Asegúrate de que cada tipo de archivo esté claramente separado y etiquetado.
-4. Organiza la respuesta por secciones (Componentes, Servicios, Módulos).
-5. NO OMITAS EL CÓDIGO HTML bajo ninguna circunstancia.
-6. IMPORTANTE: Genera siempre un app.module.ts como un archivo separado que importe todos los componentes, servicios y módulos.
-`
-
+  
+  INSTRUCCIONES IMPORTANTES:
+  1. Genera todo el código necesario (componentes, servicios, módulos) de forma completa y funcional.
+  2. ASEGÚRATE DE INCLUIR EL CÓDIGO HTML COMPLETO para cada componente. El HTML debe reflejar exactamente la interfaz que se muestra en la imagen.
+  3. Para cada TIPO de archivo, usa el formato adecuado con un comentario claro:
+  
+  PARA COMPONENTES TYPESCRIPT:
+  \`\`\`typescript
+  // NOMBRE_DEL_COMPONENTE.component.ts
+  [código aquí]
+  \`\`\`
+  
+  PARA PLANTILLAS HTML (OBLIGATORIO):
+  \`\`\`html
+  // NOMBRE_DEL_COMPONENTE.component.html
+  [código HTML completo aquí]
+  \`\`\`
+  
+  PARA ESTILOS CSS (OBLIGATORIO):
+  \`\`\`css
+  // NOMBRE_DEL_COMPONENTE.component.css
+  [código CSS aquí]
+  \`\`\`
+  
+  PARA SERVICIOS:
+  \`\`\`typescript
+  // NOMBRE_DEL_SERVICIO.service.ts
+  [código aquí]
+  \`\`\`
+  
+  PARA MÓDULOS:
+  \`\`\`typescript
+  // NOMBRE_DEL_MÓDULO.module.ts
+  [código aquí]
+  \`\`\`
+  
+  PARA APP MODULE (OBLIGATORIO):
+  \`\`\`typescript
+  // app.module.ts
+  [código aquí]
+  \`\`\`
+  
+  3. Asegúrate de que cada tipo de archivo esté claramente separado y etiquetado.
+  4. Organiza la respuesta por secciones (Componentes, Servicios, Módulos, AppModule).
+  5. NO OMITAS EL CÓDIGO HTML bajo ninguna circunstancia.
+  6. IMPORTANTE: Genera todos los estilos en CSS, NO en SCSS. Usa CSS puro en los archivos .css.`
         },
         {
           role: 'user',
@@ -151,15 +149,16 @@ PARA APP MODULE (OBLIGATORIO):
             {
               type: 'text',
               text: `Por favor, genera el código Angular completo para implementar la interfaz de usuario que se muestra en la imagen. Esta es una página llamada "${pageName}"${description ? ` que ${description}` : ''}.
-
-Analiza cuidadosamente la imagen y genera el código Angular necesario para implementar esta interfaz de manera funcional.
-
-Por favor incluye:
-1. Estructura de componentes (archivos .ts, .html y .scss para cada componente)
-2. Servicios necesarios (.service.ts)
-3. Módulo Angular (.module.ts)
-
-Usa Angular 16+ y las mejores prácticas de desarrollo.`
+  
+  Analiza cuidadosamente la imagen y genera el código Angular necesario para implementar esta interfaz de manera funcional.
+  
+  Por favor incluye:
+  1. Estructura de componentes (archivos .ts, .html y .css para cada componente)
+  2. Servicios necesarios (.service.ts)
+  3. Módulo Angular (.module.ts) para cada característica
+  4. Archivo app.module.ts principal que importe todos los componentes
+  
+  Recuerda: Usa CSS en lugar de SCSS para todos los estilos.`
             },
             {
               type: 'image_url',
@@ -170,7 +169,7 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
           ]
         }
       ],
-      max_tokens: 4096,
+      max_tokens: 8192,
       temperature: 0.2,
     });
   }
@@ -237,8 +236,8 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
       // HTML (.html)
       /```html[\s\n]*\/\/[\s\n]*([\w-]+\.component\.html)[\s\S]*?```/g,
       
-      // CSS/SCSS (.css/.scss)
-      /```(?:scss|css)[\s\n]*\/\/[\s\n]*([\w-]+\.component\.(?:scss|css))[\s\S]*?```/g
+      // CSS (.css) - modificado para buscar .css en lugar de .scss
+      /```css[\s\n]*\/\/[\s\n]*([\w-]+\.component\.css)[\s\S]*?```/g
     ];
     
     // Comprobar primero si hay un app.module.ts explícito
@@ -249,7 +248,7 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
       this.logger.log(`Bloque encontrado: app.module.ts (${appModuleCode.length} caracteres)`);
     }
     
-    // Procesar los demás patrones (excluyendo app.module.ts si ya lo encontramos)
+    // Procesar los demás patrones
     for (let i = appModuleMatch ? 1 : 0; i < patterns.length; i++) {
       const pattern = patterns[i];
       const matches = text.matchAll(pattern);
@@ -303,7 +302,32 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
         this.logger.log(`Asociado HTML genérico con componente: ${htmlFileName}`);
       }
     }
+    
+    // Similar para CSS, buscar bloques CSS genéricos si necesario
+    if (Array.from(blocks.keys()).some(k => k.endsWith('.component.ts')) && 
+        !Array.from(blocks.keys()).some(k => k.endsWith('.component.css'))) {
+      
+      this.logger.warn('No se encontraron bloques CSS con el formato esperado. Buscando bloques CSS genéricos...');
+      
+      // Buscar bloques CSS sin el formato de comentario esperado
+      const cssBlocks = Array.from(text.matchAll(/```css[\s\S]*?```/g));
+      const tsFiles = Array.from(blocks.keys()).filter(k => k.endsWith('.component.ts'));
+      
+      for (let i = 0; i < cssBlocks.length && i < tsFiles.length; i++) {
+        const tsFileName = tsFiles[i];
+        const componentName = tsFileName.replace('.component.ts', '');
+        const cssFileName = `${componentName}.component.css`;
+        
+        // Extraer el contenido del CSS
+        const cssContent = this.extractCodeContent(cssBlocks[i][0]);
+        
+        // Guardar el CSS asociándolo con el componente
+        blocks.set(cssFileName, cssContent);
+        this.logger.log(`Asociado CSS genérico con componente: ${cssFileName}`);
+      }
+    }
   }
+  
 
   /**
    * Procesa los bloques de código extraídos
@@ -319,9 +343,12 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
     
     // Primero verificar si existe un app.module.ts
     if (codeBlocks.has('app.module.ts')) {
-      appModule = { code: codeBlocks.get('app.module.ts') || '' };
-      processedFiles.set('app.module.ts', true);
-      this.logger.log('AppModule procesado desde el código generado');
+      const appModuleCode = codeBlocks.get('app.module.ts');
+      if (appModuleCode) {
+        appModule = { code: appModuleCode };
+        processedFiles.set('app.module.ts', true);
+        this.logger.log('AppModule procesado desde el código generado');
+      }
     }
     
     // Procesar el resto de archivos
@@ -340,9 +367,9 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
         // Es un archivo TypeScript de componente
         const componentName = fileName.replace('.component.ts', '');
         
-        // Buscar su HTML y CSS correspondiente
+        // Buscar su HTML y CSS correspondiente (cambiado de scss a css)
         const htmlFileName = `${componentName}.component.html`;
-        const cssFileName = `${componentName}.component.scss`;
+        const cssFileName = `${componentName}.component.css`; // Cambiado de .scss a .css
         
         const htmlContent = codeBlocks.get(htmlFileName) || '';
         const cssContent = codeBlocks.get(cssFileName) || '';
@@ -612,13 +639,11 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
     return text;
   }
 
-  /**
-   * Extrae el contenido de código de un bloque markdown
-   */
+ 
   private extractCodeContent(codeBlock: string): string {
     return codeBlock
-      .replace(/```(typescript|ts|html|scss|css)[\s\n]*\/\/[\s\n]*.*[\s\n]*/g, '')
-      .replace(/```(typescript|ts|html|scss|css)[\s\n]*/g, '')
+      .replace(/```(typescript|ts|html|css)[\s\n]*\/\/[\s\n]*.*[\s\n]*/g, '') 
+      .replace(/```(typescript|ts|html|css)[\s\n]*/g, '') 
       .replace(/```$/g, '')
       .trim();
   }
