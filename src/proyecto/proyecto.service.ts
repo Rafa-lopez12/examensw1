@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProyectoDto } from './dto/create-proyecto.dto';
 import { UpdateProyectoDto } from './dto/update-proyecto.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -64,9 +64,36 @@ export class ProyectoService {
     return `This action returns a #${id} proyecto`;
   }
 
-  update(id: number, updateProyectoDto: UpdateProyectoDto) {
-    return `This action updates a #${id} proyecto`;
+  async update(id: string, updateProyectoDto: UpdateProyectoDto) {
+    const proyecto = await this.proyectoRepository.findOne({ where: { id } });
+    
+    if (!proyecto) {
+      throw new NotFoundException(`Proyecto con ID ${id} no encontrado`);
+    }
+    
+    // Actualizar solo el nombre del proyecto
+    if (updateProyectoDto.nombre) {
+      proyecto.nombre = updateProyectoDto.nombre;
+    }
+    
+    // Si se proporciona un nuevo usuario, actualizar la relación
+    if (updateProyectoDto.usuarioId) {
+      const usuario = await this.userRepository.findOne({ 
+        where: { id: updateProyectoDto.usuarioId } 
+      });
+      
+      if (!usuario) {
+        throw new Error('El usuario especificado no existe');
+      }
+      
+      proyecto.usuario = usuario;
+    }
+    
+    await this.proyectoRepository.save(proyecto);
+    return proyecto;
   }
+
+  
 
   remove(id: number) {
     return `This action removes a #${id} proyecto`;

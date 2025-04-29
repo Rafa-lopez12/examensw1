@@ -2,7 +2,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
-import { Component, Service, Module, ProcessedResponse } from './openai.interfaces';
+import { Component, Service, Module, ProcessedResponse, AppModule } from './openai.interfaces';
 
 @Injectable()
 export class OpenAIService {
@@ -132,9 +132,18 @@ PARA MÓDULOS:
 [código aquí]
 \`\`\`
 
+PARA APP MODULE (OBLIGATORIO):
+\`\`\`typescript
+// app.module.ts
+[código aquí]
+\`\`\`
+
 3. Asegúrate de que cada tipo de archivo esté claramente separado y etiquetado.
 4. Organiza la respuesta por secciones (Componentes, Servicios, Módulos).
-5. NO OMITAS EL CÓDIGO HTML bajo ninguna circunstancia.`
+5. NO OMITAS EL CÓDIGO HTML bajo ninguna circunstancia.
+6. IMPORTANTE: Genera siempre un app.module.ts como un archivo separado que importe todos los componentes, servicios y módulos.
+`
+
         },
         {
           role: 'user',
@@ -187,15 +196,25 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
       this.logger.log(`Bloques de código extraídos: ${codeBlocks.size}`);
       
       // 2. Procesar cada bloque de código según su tipo
-      this.processCodeBlocks(codeBlocks, processedFiles, components, services, modules);
+      const processedResult = this.processCodeBlocks(codeBlocks, processedFiles, components, services, modules);
       
       // 3. Si no se encontró código, intentar con un método más flexible
-      if (components.length === 0 && services.length === 0 && modules.length === 0) {
+      if (components.length === 0 && services.length === 0 && modules.length === 0 && !processedResult.appModule) {
         this.logger.warn('No se encontraron archivos con el formato esperado. Intentando método alternativo...');
         return this.extractWithExtendedPatterns(responseText);
       }
       
-      return { components, services, modules };
+      // 4. Si no tenemos un AppModule, generarlo
+      if (!processedResult.appModule) {
+        processedResult.appModule = this.generateAppModule({ 
+          components, 
+          services, 
+          modules 
+        });
+        this.logger.log('AppModule generado automáticamente');
+      }
+      
+      return processedResult;
     } catch (error) {
       this.logger.error(`Error al procesar el código: ${error.message}`);
       // Intentar con método alternativo en caso de error
@@ -209,26 +228,51 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
   private extractFileBlocks(text: string, blocks: Map<string, string>): void {
     // Patrones para diferentes tipos de archivos
     const patterns = [
+      // AppModule específicamente
+      /```(?:typescript|ts)[\s\n]*\/\/[\s\n]*app\.module\.ts[\s\S]*?```/g,
+      
       // TypeScript (.ts) - componentes, servicios, módulos
       /```(?:typescript|ts)[\s\n]*\/\/[\s\n]*([\w-]+\.(?:component|service|module)\.ts)[\s\S]*?```/g,
+      
       // HTML (.html)
       /```html[\s\n]*\/\/[\s\n]*([\w-]+\.component\.html)[\s\S]*?```/g,
+      
       // CSS/SCSS (.css/.scss)
       /```(?:scss|css)[\s\n]*\/\/[\s\n]*([\w-]+\.component\.(?:scss|css))[\s\S]*?```/g
     ];
     
-    // Procesar cada patrón
-    for (const pattern of patterns) {
+    // Comprobar primero si hay un app.module.ts explícito
+    const appModuleMatch = text.match(/```(?:typescript|ts)[\s\n]*\/\/[\s\n]*app\.module\.ts[\s\S]*?```/);
+    if (appModuleMatch) {
+      const appModuleCode = this.extractCodeContent(appModuleMatch[0]);
+      blocks.set('app.module.ts', appModuleCode);
+      this.logger.log(`Bloque encontrado: app.module.ts (${appModuleCode.length} caracteres)`);
+    }
+    
+    // Procesar los demás patrones (excluyendo app.module.ts si ya lo encontramos)
+    for (let i = appModuleMatch ? 1 : 0; i < patterns.length; i++) {
+      const pattern = patterns[i];
       const matches = text.matchAll(pattern);
+      
       for (const match of matches) {
-        if (match[1] && match[0]) {
-          const fileName = match[1].trim();
-          const codeBlock = match[0];
+        if (match[0]) {
+          // El patrón del AppModule es especial y no tiene grupo de captura
+          if (i === 0 && appModuleMatch) {
+            continue; // Ya procesamos el AppModule arriba
+          }
           
-          // Extraer solo el contenido del código (sin el bloque markdown)
+          // Para los demás patrones, usar el grupo de captura para el nombre del archivo
+          const fileName = match[1]?.trim();
+          if (!fileName) continue;
+          
+          // Evitar procesar app.module.ts dos veces
+          if (fileName === 'app.module.ts' && blocks.has('app.module.ts')) {
+            continue;
+          }
+          
+          const codeBlock = match[0];
           const codeContent = this.extractCodeContent(codeBlock);
           
-          // Almacenar el bloque de código por nombre de archivo
           blocks.set(fileName, codeContent);
           this.logger.log(`Bloque encontrado: ${fileName} (${codeContent.length} caracteres)`);
         }
@@ -270,11 +314,26 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
     components: Component[],
     services: Service[],
     modules: Module[]
-  ): void {
+  ): { components: Component[], services: Service[], modules: Module[], appModule?: AppModule } {
+    let appModule: AppModule | undefined = undefined;
+    
+    // Primero verificar si existe un app.module.ts
+    if (codeBlocks.has('app.module.ts')) {
+      appModule = { code: codeBlocks.get('app.module.ts') || '' };
+      processedFiles.set('app.module.ts', true);
+      this.logger.log('AppModule procesado desde el código generado');
+    }
+    
+    // Procesar el resto de archivos
     for (const [fileName, codeContent] of codeBlocks.entries()) {
       // Evitar procesar el mismo archivo más de una vez
       if (processedFiles.has(fileName)) {
         continue;
+      }
+      
+      // Evitar procesar app.module.ts como un módulo normal
+      if (fileName === 'app.module.ts') {
+        continue; // Ya lo procesamos arriba
       }
       
       if (fileName.endsWith('.component.ts')) {
@@ -317,8 +376,8 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
         processedFiles.set(fileName, true);
         this.logger.log(`Servicio procesado: ${serviceName}`);
       }
-      else if (fileName.endsWith('.module.ts') && !processedFiles.has(fileName)) {
-        // Es un archivo de módulo
+      else if (fileName.endsWith('.module.ts') && !processedFiles.has(fileName) && fileName !== 'app.module.ts') {
+        // Es un archivo de módulo (que no sea AppModule)
         const moduleName = fileName.replace('.module.ts', '');
         
         modules.push({
@@ -330,6 +389,8 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
         this.logger.log(`Módulo procesado: ${moduleName}`);
       }
     }
+    
+    return { components, services, modules, appModule };
   }
 
   /**
@@ -341,22 +402,36 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
     const components: Component[] = [];
     const services: Service[] = [];
     const modules: Module[] = [];
+    let appModule: AppModule | undefined = undefined;
     
-    // 1. Extraer componentes
+    // 1. Intentar extraer el AppModule directamente
+    const appModuleMatch = responseText.match(/```(?:typescript|ts)[\s\S]*?@NgModule[\s\S]*?export\s+class\s+AppModule[\s\S]*?```/);
+    if (appModuleMatch) {
+      appModule = { code: this.extractCodeContent(appModuleMatch[0]) };
+      this.logger.log('AppModule extraído con método alternativo');
+    }
+    
+    // 2. Extraer componentes
     this.extractComponents(responseText, components);
     
-    // 2. Extraer servicios
+    // 3. Extraer servicios
     this.extractServices(responseText, services, components);
     
-    // 3. Extraer módulos
+    // 4. Extraer módulos (excluyendo AppModule)
     this.extractModules(responseText, modules, components, services);
     
-    // 4. Si aún no encontramos nada, crear componente de error
+    // 5. Si aún no encontramos nada, crear componente de error
     if (components.length === 0 && services.length === 0 && modules.length === 0) {
       this.createErrorComponent(components, responseText);
     }
     
-    return { components, services, modules };
+    // 6. Si no tenemos un AppModule, generarlo
+    if (!appModule) {
+      appModule = this.generateAppModule({ components, services, modules });
+      this.logger.log('AppModule generado automáticamente');
+    }
+    
+    return { components, services, modules, appModule };
   }
 
   /**
@@ -430,17 +505,23 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
    */
   private extractModules(text: string, modules: Module[], components: Component[], services: Service[]): void {
     // Encontrar módulos por decorador @NgModule
-    const moduleBlocks = this.findAllMatches(text, /@NgModule[\s\S]*?export\s+class\s+(\w+)/g);
+    const moduleBlocks = this.findAllMatches(text, /@NgModule[\s\S]*?export\s+class\s+(\w+)Module/g);
     
     for (const [blockText, className] of moduleBlocks) {
+      // Saltarse AppModule, que se maneja por separado
+      if (className.toLowerCase() === 'app') {
+        continue;
+      }
+      
       // Extraer nombre del módulo
-      const moduleName = className.replace(/Module$/, '').toLowerCase();
+      const moduleName = className.toLowerCase();
       
       const code = this.extractRelevantCode(blockText, 'typescript');
       
       // Verificar que no sea un duplicado
-      if (!components.some(c => c.typescript.includes(className)) && 
-          !services.some(s => s.code.includes(className))) {
+      if (!components.some(c => c.typescript.includes(className + 'Module')) && 
+          !services.some(s => s.code.includes(className + 'Module')) &&
+          !modules.some(m => m.name === moduleName)) {
         modules.push({
           name: moduleName,
           code
@@ -540,5 +621,78 @@ Usa Angular 16+ y las mejores prácticas de desarrollo.`
       .replace(/```(typescript|ts|html|scss|css)[\s\n]*/g, '')
       .replace(/```$/g, '')
       .trim();
+  }
+
+
+
+  private generateAppModule(processedResult: ProcessedResponse): AppModule {
+    const { components, services, modules } = processedResult;
+    
+    // Lista de componentes
+    const componentsList = components.map(c => `${this.pascalCase(c.name)}Component`).join(',\n    ');
+    
+    // Lista de servicios
+    const servicesList = services.map(s => `${this.pascalCase(s.name)}Service`).join(',\n    ');
+    
+    // Lista de módulos
+    const modulesList = modules.map(m => `${this.pascalCase(m.name)}Module`).join(',\n    ');
+    
+    // Importaciones
+    let imports = '';
+    
+    // Importar componentes
+    components.forEach(c => {
+      imports += `import { ${this.pascalCase(c.name)}Component } from './components/${c.name}/${c.name}.component';\n`;
+    });
+    
+    // Importar servicios
+    services.forEach(s => {
+      imports += `import { ${this.pascalCase(s.name)}Service } from './services/${s.name}.service';\n`;
+    });
+    
+    // Importar módulos
+    modules.forEach(m => {
+      imports += `import { ${this.pascalCase(m.name)}Module } from './modules/${m.name}.module';\n`;
+    });
+    
+    // Construir el código del AppModule
+    const code = `import { BrowserModule } from '@angular/platform-browser';
+  import { NgModule } from '@angular/core';
+  import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+  import { HttpClientModule } from '@angular/common/http';
+  import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+  
+  import { AppComponent } from './app.component';
+  ${imports}
+  
+  @NgModule({
+    declarations: [
+      AppComponent,
+      ${componentsList}
+    ],
+    imports: [
+      BrowserModule,
+      FormsModule,
+      ReactiveFormsModule,
+      HttpClientModule,
+      BrowserAnimationsModule,
+      ${modulesList}
+    ],
+    providers: [
+      ${servicesList}
+    ],
+    bootstrap: [AppComponent]
+  })
+  export class AppModule { }`;
+  
+    return { code };
+  }
+  
+  /**
+   * Convierte una cadena en formato camelCase a PascalCase
+   */
+  private pascalCase(text: string): string {
+    if (!text) return '';
+    return text.charAt(0).toUpperCase() + text.slice(1).replace(/-([a-z])/g, (_, char) => char.toUpperCase());
   }
 }

@@ -24,7 +24,7 @@ export class VistaController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateVistaDto: UpdateVistaDto) {
-    return this.vistaService.update(+id, updateVistaDto);
+    return this.vistaService.update(id, updateVistaDto);
   }
 
   @Delete(':id')
