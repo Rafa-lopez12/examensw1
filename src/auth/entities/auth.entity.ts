@@ -1,4 +1,4 @@
-import { Rol } from '../../rol/entities/rol.entity';
+
 import { BeforeInsert, BeforeUpdate, Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Proyecto } from '../../proyecto/entities/proyecto.entity';
 

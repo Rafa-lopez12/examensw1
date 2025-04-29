@@ -9,7 +9,7 @@ import { User } from './entities/auth.entity';
 import { CreateUserDto } from './dto/create-auth.dto';
 import { LoginUserDto } from './dto/login.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-import { Rol } from 'src/rol/entities/rol.entity';
+
 
 
 @Injectable()
@@ -19,8 +19,7 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
 
-    @InjectRepository(Rol)
-    private readonly rolRepository: Repository<Rol>,
+   
 
     private readonly jwtService: JwtService,
   ) {}
